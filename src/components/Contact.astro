@@ -1,0 +1,57 @@
+---
+import { SITE } from '../data/site';
+const chatLink = SITE.mobile ? `https://wa.me/${SITE.mobile}` : '';
+const smsLink = SITE.mobile ? `sms:+${SITE.mobile}` : '';
+---
+<section id="contact" class="section contact" aria-labelledby="contact-title">
+  <div class="wrap grid">
+    <div class="intro">
+      <h2 id="contact-title">Contact us</h2>
+      <p class="lead">Tell us about your business and what you need. We reply within 24 hours.</p>
+      <ul class="ways">
+        <li>
+          <span class="way-label">Email</span>
+          <a href={`mailto:${SITE.email}`}>{SITE.email}</a>
+        </li>
+        {chatLink && (
+          <li>
+            <span class="way-label">Chat</span>
+            <a href={chatLink}>WhatsApp</a> or <a href={smsLink}>SMS</a>
+          </li>
+        )}
+        <li>
+          <span class="way-label">Hours</span>
+          <span>{SITE.hours}</span>
+        </li>
+      </ul>
+      <p class="aside">Need a detailed quote? <a href="/plan">Build your plan</a> instead.</p>
+    </div>
+
+    <form class="form" method="post" action={SITE.formEndpoint} data-nn-form novalidate={false}>
+      <input type="hidden" name="form" value="contact" />
+      <div class="hp" aria-hidden="true"><label>Leave this empty <input name="website" tabindex="-1" autocomplete="off" /></label></div>
+      <div class="field"><label for="c-name">Your name</label><input id="c-name" name="name" autocomplete="name" required /></div>
+      <div class="field"><label for="c-biz">Business name</label><input id="c-biz" name="business" autocomplete="organization" /></div>
+      <div class="field"><label for="c-reply">Email or phone</label><input id="c-reply" name="reply_to" required autocomplete="email" /></div>
+      <div class="field"><label for="c-msg">How can we help?</label><textarea id="c-msg" name="message" required></textarea></div>
+      <button class="btn btn-dark" type="submit">Send message</button>
+      <p class="form-status" role="status" tabindex="-1" hidden></p>
+      <p class="form-note">We only use your details to reply to you.</p>
+    </form>
+  </div>
+</section>
+
+<style>
+  .contact { background: var(--mist); }
+  .grid { display: grid; gap: 40px; }
+  @media (min-width: 900px) { .grid { grid-template-columns: 1fr 1fr; gap: 64px; align-items: start; } }
+  .intro { display: grid; gap: 20px; }
+  .lead { font-size: var(--step-1); color: var(--ink-soft); line-height: 1.45; max-width: 34ch; }
+  .ways { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 14px; }
+  .ways li { display: grid; gap: 2px; }
+  .way-label { font-size: var(--step--1); color: var(--ink-soft); }
+  .ways a { font-weight: 700; font-size: var(--step-1); }
+  .aside { color: var(--ink-soft); }
+  .form { display: grid; gap: 16px; background: var(--white); padding: 24px; border-radius: var(--radius-lg); border: 1px solid var(--line); position: relative; }
+  .form .btn { justify-self: start; }
+</style>

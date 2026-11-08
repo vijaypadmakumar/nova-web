@@ -1,0 +1,16 @@
+---
+import Base from '../../layouts/Base.astro';
+import HomePage from '../../components/HomePage.astro';
+import { INDUSTRIES } from '../../data/industries';
+
+export function getStaticPaths() {
+  return INDUSTRIES.map((i) => ({ params: { slug: i.slug }, props: { industry: i } }));
+}
+const { industry } = Astro.props;
+---
+<Base
+  title={`Websites for ${industry.tile.toLowerCase()} — NovaNode Australia`}
+  description={`${industry.pitch} Try a mobile-first demo site built for ${industry.tile.toLowerCase()}.`}
+>
+  <HomePage initial={industry.slug} />
+</Base>

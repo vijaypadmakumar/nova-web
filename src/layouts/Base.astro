@@ -1,0 +1,101 @@
+---
+import '../styles/global.css';
+import { SITE } from '../data/site';
+
+interface Props { title?: string; description?: string; }
+const {
+  title = 'NovaNode Australia — mobile-first websites for small businesses',
+  description = 'Mobile-first websites for Australian small businesses, with booking, Google reviews, directions and chat built in. Pick your business and see your site.',
+} = Astro.props;
+const canonical = new URL(Astro.url.pathname, SITE.url).href;
+---
+<!doctype html>
+<html lang="en-AU">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta name="theme-color" content="#0f4c5c" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="wrap bar">
+        <a class="logo" href="/" aria-label="NovaNode Australia, home">
+          <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true"><rect width="28" height="28" rx="8" fill="#0f4c5c"/><circle cx="9" cy="19" r="3" fill="#f2b705"/><circle cx="19" cy="9" r="3" fill="#ffffff"/><path d="M9 19 19 9" stroke="#ffffff" stroke-width="2"/></svg>
+          <span>NovaNode</span>
+        </a>
+        <nav aria-label="Main" class="nav">
+          <a href="/#pick">Demos</a>
+          <a href="/#work">Our work</a>
+          <a href="/#services">Services</a>
+          <a href="/plan">Build your plan</a>
+        </nav>
+        <a class="btn btn-dark header-cta" href="/#contact">Contact us</a>
+      </div>
+    </header>
+
+    <main id="main"><slot /></main>
+
+    <footer class="site-footer">
+      <div class="wrap foot">
+        <div>
+          <p class="foot-name">{SITE.name}</p>
+          <p>{SITE.base}</p>
+        </div>
+        <div>
+          <p><a href={`mailto:${SITE.email}`}>{SITE.email}</a></p>
+          <p>{SITE.hours}</p>
+        </div>
+        <div>
+          <p>ABN {SITE.abn}</p>
+          <p>&copy; {new Date().getFullYear()} {SITE.name}</p>
+        </div>
+      </div>
+    </footer>
+
+    <nav class="bottom-bar" aria-label="Quick actions">
+      <a href="/#pick">Pick your business</a>
+      <a href="/#demo">See a demo</a>
+      <a href="/#contact" class="bb-strong">Contact us</a>
+    </nav>
+  </body>
+</html>
+
+<style>
+  .skip { position: absolute; left: 12px; top: -60px; background: var(--wattle); color: var(--ink); padding: 10px 14px; border-radius: 8px; z-index: 100; font-weight: 700; }
+  .skip:focus { top: 12px; }
+
+  .site-header { position: sticky; top: 0; z-index: 50; background: rgba(246, 248, 247, .92); backdrop-filter: saturate(140%) blur(10px); border-bottom: 1px solid var(--line); }
+  .bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 64px; }
+  .logo { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); font: 800 1.25rem/1 var(--font-display); letter-spacing: -0.02em; }
+  .nav { display: none; gap: 28px; }
+  .nav a { color: var(--ink); text-decoration: none; font-weight: 700; font-size: var(--step--1); }
+  .nav a:hover { color: var(--harbour); text-decoration: underline; }
+  .header-cta { min-height: 42px; padding: 0 18px; font-size: var(--step--1); }
+  @media (min-width: 900px) { .nav { display: flex; } }
+
+  .site-footer { background: var(--ink); color: #d7e3e1; padding-block: 48px; margin-top: 0; }
+  .site-footer a { color: var(--white); }
+  .foot { display: grid; gap: 24px; font-size: var(--step--1); }
+  .foot p + p { margin-top: 4px; }
+  .foot-name { color: var(--white); font: 700 var(--step-1)/1.2 var(--font-display); }
+  @media (min-width: 720px) { .foot { grid-template-columns: 2fr 2fr 1fr; } }
+
+  .bottom-bar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    height: calc(var(--bar-h) + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom);
+    background: var(--white); border-top: 1px solid var(--line);
+  }
+  .bottom-bar a { display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 6px; color: var(--ink); text-decoration: none; font-weight: 700; font-size: 0.875rem; line-height: 1.15; }
+  .bottom-bar a + a { border-left: 1px solid var(--mist); }
+  .bottom-bar .bb-strong { background: var(--harbour); color: var(--white); }
+  @media (min-width: 900px) { .bottom-bar { display: none; } }
+</style>

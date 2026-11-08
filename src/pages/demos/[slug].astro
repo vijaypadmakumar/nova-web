@@ -1,0 +1,404 @@
+---
+// One template renders every demo site from src/data/industries.ts.
+import { INDUSTRIES, type Industry } from '../../data/industries';
+
+export function getStaticPaths() {
+  return INDUSTRIES.map((i) => ({ params: { slug: i.slug }, props: { industry: i } }));
+}
+const { industry } = Astro.props as { industry: Industry };
+const d = industry.demo;
+const p = d.palette;
+const mapQuery = (addr: string) => encodeURIComponent(addr);
+const slots = ['9:00', '9:30', '11:00', '1:30', '3:00', '4:30'];
+const days = ['Today', 'Tomorrow', 'Thu', 'Fri', 'Sat'];
+const style = `--bg:${p.bg};--surface:${p.surface};--ink:${p.ink};--muted:${p.muted};--accent:${p.accent};--accent-ink:${p.accentInk};`;
+---
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>{d.name} — demo site by NovaNode</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,700&display=swap" rel="stylesheet" />
+</head>
+<body style={style} data-industry={industry.slug}>
+  <div class="demo-banner">Demo site by NovaNode. Business, reviews and prices are sample content.</div>
+
+  <header class="top">
+    <div class="in top-in">
+      <a class="brand" href="#top">{d.name}</a>
+      <div class="top-actions">
+        {d.a11yTools && (
+          <div id="a11y" class="a11y" role="group" aria-label="Reading options">
+            <button type="button" data-a11y="text" aria-pressed="false" title="Larger text">A+</button>
+            <button type="button" data-a11y="contrast" aria-pressed="false" title="High contrast">Contrast</button>
+          </div>
+        )}
+        {industry.slug === 'online-shop' && (
+          <button id="cart" type="button" class="cart" aria-label="Cart">Cart <span data-cart-count>0</span></button>
+        )}
+        <a class="cta" href={`#${d.cta.target}`}>{d.cta.label}</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="in hero-in">
+        <div>
+          <p class="place">{d.place}</p>
+          <h1>{d.tagline}</h1>
+          <div class="hero-btns">
+            <a class="cta big" href={`#${d.cta.target}`}>{d.cta.label}</a>
+            {d.sections.some((s) => s.kind === 'reviews') && (
+              <a class="rating-chip" href="#reviews">★ {(d.sections.find((s) => s.kind === 'reviews') as any).rating} on Google</a>
+            )}
+          </div>
+        </div>
+        <div class="hero-art" aria-hidden="true"><span></span><span></span><span></span></div>
+      </div>
+    </section>
+
+    {d.sections.map((s) => (
+      <section id={s.id} class={`block k-${s.kind}`}>
+        <div class="in">
+          <h2>{s.title}</h2>
+          {'intro' in s && s.intro && <p class="intro">{s.intro}</p>}
+
+          {s.kind === 'booking' && (
+            <div class="booking" data-booking>
+              {s.vehicle && (
+                <label class="lbl">Rego<input class="inp" placeholder="e.g. ABC12D" maxlength="8" /></label>
+              )}
+              <p class="lbl">Service</p>
+              <div class="opts" data-group="service">
+                {s.services.map((sv, n) => (
+                  <button type="button" class="opt svc" aria-pressed={n === 0 ? 'true' : 'false'}>
+                    <span>{sv.name}</span><small>{sv.mins} min · {sv.price}</small>
+                  </button>
+                ))}
+              </div>
+              {s.staff && (<>
+                <p class="lbl">With</p>
+                <div class="opts row" data-group="staff">
+                  {s.staff.map((st, n) => <button type="button" class="opt pill" aria-pressed={n === 0 ? 'true' : 'false'}>{st}</button>)}
+                </div>
+              </>)}
+              <p class="lbl">Day</p>
+              <div class="opts row" data-group="day">
+                {days.map((dy, n) => <button type="button" class="opt pill" aria-pressed={n === 1 ? 'true' : 'false'}>{dy}</button>)}
+              </div>
+              <p class="lbl">Time</p>
+              <div class="opts row" data-group="time">
+                {slots.map((t, n) => <button type="button" class="opt pill" aria-pressed={n === 2 ? 'true' : 'false'}>{t}</button>)}
+              </div>
+              <button type="button" class="cta big wide" data-confirm>Confirm booking</button>
+              <p class="done" hidden data-done>Booked (demo). A confirmation email and reminder would go out automatically.</p>
+            </div>
+          )}
+
+          {s.kind === 'list' && (
+            <ul class="list">
+              {s.items.map((it) => (
+                <li><div><strong>{it.name}</strong>{it.detail && <span>{it.detail}</span>}</div>{it.price && <em>{it.price}</em>}</li>
+              ))}
+            </ul>
+          )}
+
+          {s.kind === 'gallery' && (
+            <ul class={`gallery ${s.pairs ? 'pairs' : ''}`}>
+              {s.items.map((g, n) => (
+                <li class={`g g${n % 6}`}><span>{s.pairs ? `${g} · ${n % 2 === 0 ? 'before' : 'after'}` : g}</span></li>
+              ))}
+            </ul>
+          )}
+
+          {s.kind === 'reviews' && (
+            <div class="reviews">
+              <p class="score"><strong>{s.rating}</strong> <span class="stars" aria-hidden="true">★★★★★</span> <span>{s.count} Google reviews (sample)</span></p>
+              <ul>
+                {s.items.map((r) => <li><p>“{r.text}”</p><small>{r.name}</small></li>)}
+              </ul>
+            </div>
+          )}
+
+          {s.kind === 'map' && (
+            <div class="map-wrap">
+              <div class="map" aria-hidden="true"><i class="road r1"></i><i class="road r2"></i><i class="road r3"></i><b class="pin"></b></div>
+              <div class="map-info">
+                <p><strong>{s.address}</strong></p>
+                <div class="dir">
+                  <a class="cta" href={`https://www.google.com/maps/search/?api=1&query=${mapQuery(s.address)}`} target="_blank" rel="noopener">Google Maps</a>
+                  <a class="ghost" href={`https://maps.apple.com/?q=${mapQuery(s.address)}`} target="_blank" rel="noopener">Apple Maps</a>
+                </div>
+                <dl class="hours">{s.hours.map(([a, b]) => (<><dt>{a}</dt><dd>{b}</dd></>))}</dl>
+              </div>
+            </div>
+          )}
+
+          {s.kind === 'form' && (
+            <form class="dform" data-demo-form data-done={s.done}>
+              {s.fields.map((f, n) => (
+                <label class="lbl">{f.label}
+                  {f.type === 'textarea' ? <textarea class="inp" rows="3"></textarea>
+                    : f.type === 'select' ? <select class="inp">{f.options!.map((o) => <option>{o}</option>)}</select>
+                    : f.type === 'file' ? <span class="file inp">Add photos <small>(camera or gallery)</small></span>
+                    : <input class="inp" type={f.type} />}
+                </label>
+              ))}
+              <button class="cta big wide" type="submit">{s.submit}</button>
+              <p class="done" hidden></p>
+            </form>
+          )}
+
+          {s.kind === 'cards' && (
+            <ul class={`cards ${s.shop ? 'shop' : ''}`}>
+              {s.items.map((c, n) => (
+                <li>
+                  <div class={`thumb g${n % 6}`} aria-hidden="true"></div>
+                  <div class="card-body">
+                    <strong>{c.title}</strong>
+                    <small>{c.meta}</small>
+                    {c.text && <p>{c.text}</p>}
+                    {s.shop && (
+                      <div class="buy">
+                        <span class="price">{c.price}</span>
+                        <span class={`stock ${c.stock === 0 ? 'out' : c.stock! < 5 ? 'low' : ''}`}>{c.stock === 0 ? 'Out of stock' : `${c.stock} in stock`}</span>
+                        <button type="button" class="cta" data-add disabled={c.stock === 0}>Add</button>
+                      </div>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {s.kind === 'areas' && (
+            <ul class="areas">{s.items.map((a) => <li>{a}</li>)}</ul>
+          )}
+
+          {s.kind === 'about' && (
+            <div class="about">
+              <p>{s.text}</p>
+              {s.team && <ul>{s.team.map((t) => <li><span class="av" aria-hidden="true"></span><strong>{t.name}</strong><small>{t.role}</small></li>)}</ul>}
+            </div>
+          )}
+
+          {s.kind === 'contact' && (
+            <div class="contact-block">
+              <a class="cta big wide" href={`tel:${s.phone.replace(/\D/g, '')}`} data-demo-link={`Calls ${s.phone}`}>Call {s.phone}</a>
+              {s.email && <a class="ghost wide" href={`mailto:${s.email}`} data-demo-link={`Emails ${s.email}`}>{s.email}</a>}
+            </div>
+          )}
+        </div>
+      </section>
+    ))}
+  </main>
+
+  <footer class="foot"><div class="in">{d.name} · {d.place}<br /><small>Website by NovaNode Australia</small></div></footer>
+
+  {d.chat && (
+    <>
+      <button id="chat" type="button" class="chat" aria-expanded="false" aria-controls="chat-sheet">Chat on {d.chat}</button>
+      <div id="chat-sheet" class="sheet" hidden>
+        <p><strong>Chat with {d.name}</strong></p>
+        <p>Opens {d.chat} with a message ready to send. Most replies come within the hour (demo).</p>
+        <button type="button" class="cta wide" data-demo-link={`Opens ${d.chat}`}>Open {d.chat}</button>
+      </div>
+    </>
+  )}
+  <div class="toast" role="status" hidden></div>
+</body>
+</html>
+
+<style is:global>
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 72px; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 'Atkinson Hyperlegible Next', system-ui, sans-serif; }
+  body.big-text { font-size: 19px; }
+  body.contrast { --bg: #ffffff; --surface: #ffffff; --ink: #000000; --muted: #1a1a1a; --accent: #003a75; }
+  body.contrast .block, body.contrast .booking, body.contrast .list li, body.contrast .reviews li { border-color: #000 !important; }
+  h1, h2 { font-family: 'Bricolage Grotesque', system-ui, sans-serif; letter-spacing: -0.02em; line-height: 1.08; margin: 0; }
+  h1 { font-size: 1.85em; }
+  h2 { font-size: 1.45em; margin-bottom: 6px; }
+  .in { max-width: 1080px; margin: 0 auto; padding: 0 18px; }
+  a { color: var(--accent); }
+
+  .demo-banner { background: var(--ink); color: var(--bg); font-size: 12px; text-align: center; padding: 6px 12px; }
+  .top { position: sticky; top: 0; z-index: 10; background: var(--surface); border-bottom: 1px solid color-mix(in srgb, var(--ink) 12%, transparent); }
+  .top-in { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 58px; }
+  .brand { font: 700 1.05em/1.1 'Bricolage Grotesque', system-ui, sans-serif; color: var(--ink); text-decoration: none; max-width: 44%; }
+  .top-actions { display: flex; align-items: center; gap: 8px; }
+  .a11y { display: flex; gap: 4px; }
+  .a11y button, .cart { font: 700 12px/1 inherit; font-family: inherit; border: 1.5px solid var(--ink); background: transparent; color: var(--ink); border-radius: 999px; padding: 8px 10px; cursor: pointer; }
+  .a11y button[aria-pressed='true'] { background: var(--ink); color: var(--bg); }
+  .cart span { display: inline-block; min-width: 18px; padding: 2px 5px; margin-left: 4px; border-radius: 999px; background: var(--accent); color: var(--accent-ink); }
+  .cta { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 0 16px; border-radius: 999px; background: var(--accent); color: var(--accent-ink); font-weight: 700; text-decoration: none; border: 0; cursor: pointer; font-family: inherit; font-size: 0.9em; }
+  .cta:disabled { opacity: .4; cursor: not-allowed; }
+  .cta.big { min-height: 50px; padding: 0 22px; font-size: 1em; }
+  .wide { width: 100%; }
+  .ghost { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1.5px solid var(--ink); color: var(--ink); text-decoration: none; font-weight: 700; }
+  .top-actions .cta { display: none; }
+  @media (min-width: 640px) { .top-actions .cta { display: inline-flex; } }
+
+  .hero { padding: 36px 0 40px; }
+  .hero-in { display: grid; gap: 28px; }
+  .place { color: var(--muted); font-weight: 700; margin: 0 0 10px; }
+  .hero-btns { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 22px; }
+  .rating-chip { color: var(--ink); font-weight: 700; text-decoration: none; padding: 10px 14px; border-radius: 999px; background: var(--surface); border: 1px solid color-mix(in srgb, var(--ink) 15%, transparent); }
+  .hero-art { display: grid; grid-template-columns: 2fr 1fr; grid-template-rows: 1fr 1fr; gap: 8px; height: 200px; }
+  .hero-art span { border-radius: 16px; background: color-mix(in srgb, var(--accent) 22%, var(--bg)); }
+  .hero-art span:first-child { grid-row: span 2; background: color-mix(in srgb, var(--accent) 55%, var(--bg)); }
+  .hero-art span:last-child { background: color-mix(in srgb, var(--ink) 12%, var(--bg)); }
+  @media (min-width: 800px) { .hero { padding: 72px 0; } .hero-in { grid-template-columns: 1.2fr 1fr; align-items: center; } h1 { font-size: 2.8em; } .hero-art { height: 320px; } }
+
+  .block { padding: 36px 0; border-top: 1px solid color-mix(in srgb, var(--ink) 10%, transparent); transition: background-color .4s; }
+  @media (min-width: 800px) { .block { padding: 56px 0; } }
+  .intro { color: var(--muted); margin: 0 0 18px; max-width: 52ch; }
+  .nn-flash { animation: nnflash 1.8s ease; }
+  @keyframes nnflash { 0%, 60% { background: color-mix(in srgb, #f2b705 30%, transparent); box-shadow: inset 0 0 0 3px #f2b705; } 100% { background: transparent; box-shadow: none; } }
+  #chat.nn-flash, #cart.nn-flash, #a11y.nn-flash { animation: nnring 1.8s ease; }
+  @keyframes nnring { 0%, 60% { box-shadow: 0 0 0 4px #f2b705; } 100% { box-shadow: none; } }
+
+  .booking { background: var(--surface); border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent); border-radius: 18px; padding: 16px; display: grid; gap: 10px; max-width: 560px; }
+  .lbl { display: grid; gap: 6px; font-weight: 700; font-size: 0.9em; margin: 4px 0 0; }
+  .inp { font: inherit; font-weight: 400; padding: 12px; border-radius: 10px; border: 1.5px solid color-mix(in srgb, var(--ink) 20%, transparent); background: var(--surface); color: var(--ink); width: 100%; }
+  .file { color: var(--muted); border-style: dashed; }
+  .opts { display: grid; gap: 8px; }
+  .opts.row { display: flex; flex-wrap: wrap; }
+  .opt { font: inherit; text-align: left; cursor: pointer; border: 1.5px solid color-mix(in srgb, var(--ink) 18%, transparent); background: var(--bg); color: var(--ink); border-radius: 12px; padding: 10px 12px; }
+  .opt small { display: block; color: var(--muted); }
+  .opt.pill { border-radius: 999px; padding: 8px 14px; }
+  .opt[aria-pressed='true'] { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); }
+  .opt[aria-pressed='true'] small { color: var(--accent-ink); opacity: .85; }
+  .done { font-weight: 700; color: var(--accent); margin: 4px 0 0; }
+
+  .list { list-style: none; padding: 0; margin: 0; max-width: 640px; }
+  .list li { display: flex; justify-content: space-between; gap: 16px; padding: 14px 0; border-bottom: 1px solid color-mix(in srgb, var(--ink) 10%, transparent); }
+  .list li span { display: block; color: var(--muted); font-size: 0.9em; }
+  .list em { font-style: normal; font-weight: 700; white-space: nowrap; }
+
+  .gallery { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  @media (min-width: 800px) { .gallery { grid-template-columns: repeat(3, 1fr); } .gallery.pairs { grid-template-columns: repeat(4, 1fr); } }
+  .g { aspect-ratio: 1; border-radius: 14px; display: flex; align-items: flex-end; padding: 10px; font-size: 0.8em; font-weight: 700; color: var(--ink); }
+  .g span { background: color-mix(in srgb, var(--surface) 85%, transparent); padding: 3px 8px; border-radius: 999px; }
+  .g0 { background: color-mix(in srgb, var(--accent) 55%, var(--bg)); } .g1 { background: color-mix(in srgb, var(--accent) 25%, var(--bg)); }
+  .g2 { background: color-mix(in srgb, var(--ink) 18%, var(--bg)); } .g3 { background: color-mix(in srgb, var(--accent) 40%, var(--surface)); }
+  .g4 { background: color-mix(in srgb, var(--ink) 8%, var(--bg)); } .g5 { background: color-mix(in srgb, var(--accent) 70%, var(--ink)); }
+
+  .reviews .score { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; margin: 0 0 14px; }
+  .reviews .score strong { font-size: 2em; font-family: 'Bricolage Grotesque', system-ui, sans-serif; }
+  .stars { color: #e3a008; letter-spacing: 2px; }
+  .reviews .score span:last-child { color: var(--muted); font-size: 0.9em; }
+  .reviews ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+  @media (min-width: 800px) { .reviews ul { grid-template-columns: 1fr 1fr; } }
+  .reviews li { background: var(--surface); border: 1px solid color-mix(in srgb, var(--ink) 10%, transparent); border-radius: 14px; padding: 14px; }
+  .reviews li p { margin: 0 0 6px; } .reviews small { color: var(--muted); }
+
+  .map-wrap { display: grid; gap: 14px; }
+  @media (min-width: 800px) { .map-wrap { grid-template-columns: 1.3fr 1fr; align-items: start; } }
+  .map { position: relative; height: 190px; border-radius: 16px; overflow: hidden; background: color-mix(in srgb, var(--accent) 8%, #e9efe9); }
+  .road { position: absolute; background: #fff; }
+  .r1 { left: 0; right: 0; top: 45%; height: 14px; } .r2 { top: 0; bottom: 0; left: 30%; width: 12px; } .r3 { top: 0; bottom: 0; left: 72%; width: 8px; transform: rotate(18deg); }
+  .pin { position: absolute; left: calc(30% - 10px); top: calc(45% - 28px); width: 28px; height: 28px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: var(--accent); box-shadow: 0 0 0 4px #fff; }
+  .map-info p { margin: 0 0 10px; }
+  .dir { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .dir .cta { min-height: 44px; }
+  .hours { display: grid; grid-template-columns: auto 1fr; gap: 4px 16px; margin: 0; font-size: 0.95em; }
+  .hours dt { font-weight: 700; } .hours dd { margin: 0; color: var(--muted); }
+
+  .dform { display: grid; gap: 10px; max-width: 560px; background: var(--surface); padding: 16px; border-radius: 18px; border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent); }
+
+  .cards { list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+  @media (min-width: 800px) { .cards { grid-template-columns: repeat(3, 1fr); } .cards.shop { grid-template-columns: repeat(4, 1fr); } }
+  .cards li { background: var(--surface); border-radius: 16px; overflow: hidden; border: 1px solid color-mix(in srgb, var(--ink) 10%, transparent); }
+  .thumb { aspect-ratio: 4 / 3; }
+  .card-body { padding: 12px 14px 14px; display: grid; gap: 4px; }
+  .card-body small { color: var(--muted); }
+  .card-body p { margin: 4px 0 0; font-size: 0.95em; }
+  .buy { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
+  .price { font-weight: 700; margin-right: auto; }
+  .stock { font-size: 0.8em; font-weight: 700; color: #1d6b3f; width: 100%; order: 3; }
+  .stock.low { color: #9a5b00; } .stock.out { color: #9b1c1c; }
+
+  .areas { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+  .areas li { padding: 8px 14px; border-radius: 999px; background: var(--surface); border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent); font-weight: 700; }
+
+  .about p { max-width: 58ch; margin: 0 0 16px; }
+  .about ul { list-style: none; padding: 0; margin: 0; display: flex; gap: 16px; flex-wrap: wrap; }
+  .about li { display: grid; gap: 2px; justify-items: start; }
+  .av { width: 56px; height: 56px; border-radius: 50%; background: color-mix(in srgb, var(--accent) 35%, var(--bg)); margin-bottom: 6px; }
+  .about small { color: var(--muted); }
+
+  .contact-block { display: grid; gap: 10px; max-width: 420px; }
+
+  .foot { padding: 32px 0 110px; color: var(--muted); font-size: 0.9em; border-top: 1px solid color-mix(in srgb, var(--ink) 10%, transparent); }
+  .chat { position: fixed; right: 14px; bottom: 14px; z-index: 20; font: 700 0.9em/1 inherit; font-family: inherit; border: 0; border-radius: 999px; padding: 14px 18px; background: var(--ink); color: var(--bg); cursor: pointer; box-shadow: 0 10px 24px -10px rgba(0,0,0,.5); }
+  .sheet { position: fixed; right: 14px; bottom: 70px; z-index: 21; width: min(300px, calc(100% - 28px)); background: var(--surface); border-radius: 16px; padding: 16px; box-shadow: 0 16px 40px -12px rgba(0,0,0,.35); }
+  .sheet p { margin: 0 0 10px; font-size: 0.95em; }
+  .toast { position: fixed; left: 50%; bottom: 80px; transform: translateX(-50%); z-index: 30; background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-size: 0.9em; font-weight: 700; max-width: calc(100% - 28px); text-align: center; }
+</style>
+
+<script>
+  const toast = document.querySelector('.toast') as HTMLElement;
+  let t: number | undefined;
+  const say = (msg: string) => {
+    toast.textContent = msg; toast.hidden = false;
+    clearTimeout(t); t = window.setTimeout(() => { toast.hidden = true; }, 2600);
+  };
+
+  // Single-choice groups in the booking widget.
+  document.querySelectorAll<HTMLElement>('[data-group]').forEach((g) => {
+    g.addEventListener('click', (e) => {
+      const b = (e.target as HTMLElement).closest('.opt');
+      if (!b) return;
+      g.querySelectorAll('.opt').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
+    });
+  });
+  document.querySelectorAll<HTMLElement>('[data-booking]').forEach((bk) => {
+    bk.querySelector('[data-confirm]')?.addEventListener('click', () => {
+      (bk.querySelector('[data-done]') as HTMLElement).hidden = false;
+    });
+  });
+
+  // Demo forms never send anything.
+  document.querySelectorAll<HTMLFormElement>('[data-demo-form]').forEach((f) => {
+    f.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const done = f.querySelector('.done') as HTMLElement;
+      done.textContent = f.dataset.done || 'Sent (demo).';
+      done.hidden = false;
+    });
+  });
+
+  // Calls, emails and chat apps are simulated.
+  document.querySelectorAll<HTMLElement>('[data-demo-link]').forEach((a) => {
+    a.addEventListener('click', (e) => { e.preventDefault(); say(`${a.dataset.demoLink} on a live site`); });
+  });
+
+  // Cart
+  let count = 0;
+  const countEl = document.querySelector('[data-cart-count]');
+  document.querySelectorAll('[data-add]').forEach((b) => b.addEventListener('click', () => {
+    count += 1; if (countEl) countEl.textContent = String(count); say('Added to cart (demo)');
+  }));
+  document.getElementById('cart')?.addEventListener('click', () => say(count ? `Checkout with ${count} item${count > 1 ? 's' : ''} (demo)` : 'Your cart is empty'));
+
+  // Chat sheet
+  const chat = document.getElementById('chat');
+  const sheet = document.getElementById('chat-sheet');
+  chat?.addEventListener('click', () => {
+    const open = sheet!.hidden;
+    sheet!.hidden = !open; chat.setAttribute('aria-expanded', String(open));
+  });
+
+  // Reading options (NDIS demo)
+  document.querySelectorAll<HTMLButtonElement>('[data-a11y]').forEach((b) => b.addEventListener('click', () => {
+    const cls = b.dataset.a11y === 'text' ? 'big-text' : 'contrast';
+    const on = document.body.classList.toggle(cls);
+    b.setAttribute('aria-pressed', String(on));
+  }));
+</script>

@@ -1,0 +1,135 @@
+---
+import PickFlow from './PickFlow.astro';
+import Contact from './Contact.astro';
+import { SITE, STAT, SERVICES, TESTIMONIALS } from '../data/site';
+import { WORK, INDUSTRIES } from '../data/industries';
+
+interface Props { initial?: string; }
+const { initial } = Astro.props;
+const demoName = (slug: string) => INDUSTRIES.find((i) => i.slug === slug)?.tile ?? '';
+---
+<section class="hero" aria-labelledby="hero-title">
+  <div class="wrap hero-inner">
+    <h1 id="hero-title">G’day — let’s get your business found.</h1>
+    <div class="hero-side">
+    <p class="hero-line">Tell us what you do and we’ll show you what your site could look like.</p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="#pick">Pick your business <span aria-hidden="true">↓</span></a>
+      <a class="btn btn-ghost" href="#contact">Contact us</a>
+    </div>
+    <p class="hero-trust">{SITE.base}</p>
+    </div>
+  </div>
+</section>
+
+<PickFlow initial={initial} />
+
+<section class="section proof" aria-label="Why mobile first">
+  <div class="wrap">
+    <p class="proof-line"><span class="proof-fig">{STAT.figure}</span> {STAT.line} So we design for the phone first, then scale up.</p>
+    <p class="proof-src">Source: <a href={STAT.sourceUrl} rel="noopener" target="_blank">{STAT.source}</a></p>
+  </div>
+</section>
+
+<section id="work" class="section work" aria-labelledby="work-title">
+  <div class="wrap">
+    <div class="section-head">
+      <h2 id="work-title">Our work</h2>
+      <p>A few of the businesses we’ve built and look after.</p>
+    </div>
+    <ul class="work-list">
+      {WORK.map((w) => (
+        <li class="work-card">
+          <div class="work-top">
+            <span class="work-mono" aria-hidden="true">{w.client.charAt(0)}</span>
+            <span class={`work-status s-${w.status.toLowerCase().replace(/\s+/g, '-')}`}>{w.status}</span>
+          </div>
+          <h3>{w.client}</h3>
+          <p class="work-ind">{w.industry}</p>
+          <p>{w.text}</p>
+          <a href={`/for/${w.demo}/#demo`}>See a {demoName(w.demo).toLowerCase()} demo</a>
+        </li>
+      ))}
+    </ul>
+  </div>
+</section>
+
+<section id="services" class="section services" aria-labelledby="services-title">
+  <div class="wrap">
+    <div class="section-head">
+      <h2 id="services-title">What we do</h2>
+      <p>Every site starts with the essentials. Add the rest when you need it.</p>
+    </div>
+    <ul class="svc-list">
+      {SERVICES.map((s) => (
+        <li><h3>{s.title}</h3><p>{s.text}</p></li>
+      ))}
+    </ul>
+    <p class="svc-note">We don’t run SEO or Google Ads campaigns. If you need them, we’ll point you to people who do.</p>
+  </div>
+</section>
+
+{TESTIMONIALS.length > 0 && (
+  <section class="section quotes" aria-labelledby="quotes-title">
+    <div class="wrap">
+      <h2 id="quotes-title">What clients say</h2>
+      <ul class="quote-list">
+        {TESTIMONIALS.map((t) => (
+          <li><blockquote>{t.quote}</blockquote><p><strong>{t.name}</strong>, {t.role}</p></li>
+        ))}
+      </ul>
+    </div>
+  </section>
+)}
+
+<Contact />
+
+<style>
+  .hero { padding-block: 56px 64px; }
+  @media (min-width: 900px) { .hero { padding-block: 120px 128px; } }
+  .hero-inner { display: grid; gap: 22px; }
+  .hero h1 { font-size: var(--step-4); font-weight: 800; letter-spacing: -0.035em; line-height: 0.98; max-width: 13ch; }
+  .hero-line { font-size: var(--step-1); color: var(--ink-soft); max-width: 36ch; line-height: 1.45; }
+  .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
+  .hero-trust { font-size: var(--step--1); color: var(--ink-soft); }
+  .hero-side { display: grid; gap: 22px; }
+  @media (min-width: 1024px) {
+    .hero-inner { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); column-gap: 64px; align-items: end; }
+    .hero h1 { max-width: 12ch; font-size: clamp(4rem, 6.4vw, 6rem); }
+    .hero-side { padding-bottom: 10px; }
+  }
+
+  .proof { background: var(--harbour); color: var(--white); }
+  .proof-line { font: 700 var(--step-2)/1.2 var(--font-display); letter-spacing: -0.015em; max-width: 26ch; }
+  @media (min-width: 900px) { .proof-line { font-size: 2.4rem; } }
+  .proof-fig { color: var(--wattle); }
+  .proof-src { margin-top: 20px; font-size: var(--step--1); color: #bcd6d6; }
+  .proof-src a { color: var(--white); }
+
+  .work-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 16px; }
+  @media (min-width: 900px) { .work-list { grid-template-columns: repeat(3, 1fr); gap: 20px; } }
+  .work-card { display: grid; gap: 10px; align-content: start; background: var(--white); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 22px; }
+  .work-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .work-mono { width: 48px; height: 48px; display: grid; place-items: center; border-radius: 14px; background: var(--mist); color: var(--harbour); font: 800 1.4rem/1 var(--font-display); }
+  .work-status { font-size: var(--step--1); font-weight: 700; padding: 4px 10px; border-radius: 999px; background: var(--mist); color: var(--ink); }
+  .work-status.s-live { background: #dff3e6; color: #12432a; }
+  .work-status.s-in-progress { background: var(--wattle-soft); color: #5b4500; }
+  .work-ind { font-size: var(--step--1); color: var(--ink-soft); margin-top: -4px; }
+  .work-card a { font-weight: 700; margin-top: 4px; }
+
+  .services { background: var(--white); border-top: 1px solid var(--line); }
+  .svc-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; border-top: 1px solid var(--line); }
+  @media (min-width: 720px) { .svc-list { grid-template-columns: 1fr 1fr; column-gap: 48px; } }
+  @media (min-width: 1024px) { .svc-list { grid-template-columns: repeat(3, 1fr); } }
+  .svc-list li { padding: 22px 0; border-bottom: 1px solid var(--line); display: grid; gap: 8px; }
+  .svc-list p { color: var(--ink-soft); }
+  .svc-note { margin-top: 28px; font-size: var(--step--1); color: var(--ink-soft); max-width: 60ch; }
+
+  .quote-list { list-style: none; padding: 0; margin: 32px 0 0; display: grid; gap: 24px; }
+  .quote-list blockquote { margin: 0 0 8px; font: 700 var(--step-1)/1.35 var(--font-display); }
+</style>
+
+<script>
+  import { wireForms } from '../scripts/forms';
+  wireForms();
+</script>

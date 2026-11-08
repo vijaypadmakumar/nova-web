@@ -1,0 +1,127 @@
+---
+import Base from '../layouts/Base.astro';
+import { INDUSTRIES, ESSENTIALS, ADD_ONS } from '../data/industries';
+import { SITE } from '../data/site';
+---
+<Base title="Build your plan — NovaNode Australia" description="Tick the features your business needs, add any custom requests, and get a quote within 24 hours.">
+  <section class="section plan">
+    <div class="wrap">
+      <div class="section-head">
+        <h1>Build your plan</h1>
+        <p>Tick what you need, tell us anything specific to your business, and we’ll send a quote within 24 hours. There’s no obligation.</p>
+      </div>
+
+      <form class="plan-form" method="post" action={SITE.formEndpoint} data-nn-form data-success="Thanks, your plan is with us. We’ll reply with a quote within 24 hours.">
+        <input type="hidden" name="form" value="plan" />
+        <div class="hp" aria-hidden="true"><label>Leave this empty <input name="website" tabindex="-1" autocomplete="off" /></label></div>
+
+        <fieldset>
+          <legend>Your business</legend>
+          <div class="field">
+            <label for="p-type">Business type</label>
+            <select id="p-type" name="business_type">
+              {INDUSTRIES.map((i) => <option value={i.slug}>{i.tile}</option>)}
+              <option value="other">Something else</option>
+            </select>
+          </div>
+          <div class="field" data-other hidden>
+            <label for="p-other">What does your business do?</label>
+            <input id="p-other" name="business_other" />
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Included in every site</legend>
+          <ul class="included">
+            {ESSENTIALS.map((e) => <li>{e}</li>)}
+          </ul>
+        </fieldset>
+
+        <fieldset>
+          <legend>Features for your industry</legend>
+          <p class="form-note">We’ve ticked what businesses like yours usually need. Untick anything you don’t.</p>
+          {INDUSTRIES.map((i) => (
+            <div class="checks" data-for={i.slug} hidden>
+              {i.features.map((f) => (
+                <label class="check"><input type="checkbox" name="features[]" value={f.label} checked /> <span><strong>{f.label}</strong><br />{f.detail}</span></label>
+              ))}
+            </div>
+          ))}
+          <p class="form-note" data-for-other hidden>Tell us about your business below and we’ll suggest the right features.</p>
+        </fieldset>
+
+        <fieldset>
+          <legend>Add-ons</legend>
+          <div class="checks">
+            {ADD_ONS.map((a) => (
+              <label class="check"><input type="checkbox" name="addons[]" value={a} /> <span>{a}</span></label>
+            ))}
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Something specific to your business?</legend>
+          <p class="form-note">Optional. If it’s already possible we’ll say so; if it’s custom we’ll quote it separately.</p>
+          <div class="field"><label for="r-problem">What problem should it solve?</label><textarea id="r-problem" name="request_problem"></textarea></div>
+          <div class="two">
+            <div class="field"><label for="r-who">Who would use it?</label><input id="r-who" name="request_who" placeholder="e.g. customers, staff" /></div>
+            <div class="field"><label for="r-often">How often?</label><input id="r-often" name="request_often" placeholder="e.g. daily, a few times a month" /></div>
+          </div>
+          <div class="field"><label for="r-example">An example you’ve seen elsewhere</label><input id="r-example" name="request_example" placeholder="A link or a short description" /></div>
+          <div class="field"><label for="r-when">When do you need it?</label><input id="r-when" name="request_when" placeholder="e.g. before Christmas" /></div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Where should we send the quote?</legend>
+          <div class="two">
+            <div class="field"><label for="q-name">Your name</label><input id="q-name" name="name" required autocomplete="name" /></div>
+            <div class="field"><label for="q-biz">Business name</label><input id="q-biz" name="business" autocomplete="organization" /></div>
+          </div>
+          <div class="field"><label for="q-reply">Email or phone</label><input id="q-reply" name="reply_to" required autocomplete="email" /></div>
+          <div class="field"><label for="q-site">Current website, if you have one</label><input id="q-site" name="current_site" inputmode="url" /></div>
+        </fieldset>
+
+        <button class="btn btn-primary" type="submit">Send my plan</button>
+        <p class="form-status" role="status" tabindex="-1" hidden></p>
+        <p class="form-note">We only use your details to prepare and send your quote.</p>
+      </form>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .plan h1 { font-size: var(--step-3); }
+  .plan-form { display: grid; gap: 24px; max-width: 760px; }
+  fieldset { border: 1px solid var(--line); background: var(--white); border-radius: var(--radius-lg); padding: 20px; margin: 0; display: grid; gap: 14px; }
+  legend { font: 700 var(--step-1)/1.2 var(--font-display); padding: 0 6px; }
+  .included { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+  .checks { display: grid; gap: 10px; }
+  .checks[hidden] { display: none; }
+  .check { display: flex; gap: 12px; align-items: flex-start; padding: 12px; border: 1.5px solid var(--line); border-radius: var(--radius); cursor: pointer; line-height: 1.4; }
+  .check input { width: 22px; height: 22px; margin: 1px 0 0; accent-color: var(--harbour); flex: none; }
+  .check:has(input:checked) { border-color: var(--harbour); background: #eef5f4; }
+  .two { display: grid; gap: 14px; }
+  @media (min-width: 640px) { .two { grid-template-columns: 1fr 1fr; } }
+  .plan-form > .btn { justify-self: start; }
+</style>
+
+<script>
+  import { wireForms } from '../scripts/forms';
+  wireForms();
+
+  const select = document.getElementById('p-type') as HTMLSelectElement;
+  const show = (slug: string) => {
+    document.querySelectorAll<HTMLElement>('[data-for]').forEach((el) => {
+      const on = el.dataset.for === slug;
+      el.hidden = !on;
+      el.querySelectorAll('input').forEach((i) => { i.disabled = !on; });
+    });
+    (document.querySelector('[data-other]') as HTMLElement).hidden = slug !== 'other';
+    (document.querySelector('[data-for-other]') as HTMLElement).hidden = slug !== 'other';
+  };
+  let start = new URLSearchParams(location.search).get('for') || '';
+  if (!start) { try { start = localStorage.getItem('nn-business') || ''; } catch { /* storage unavailable */ } }
+  if (start && [...select.options].some((o) => o.value === start)) select.value = start;
+  show(select.value);
+  select.addEventListener('change', () => show(select.value));
+</script>

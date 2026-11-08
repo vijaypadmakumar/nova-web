@@ -1,0 +1,337 @@
+---
+import QRCode from 'qrcode';
+import { INDUSTRIES, DEFAULT_SLUG } from '../data/industries';
+import { SITE } from '../data/site';
+
+interface Props { initial?: string; }
+const initialSlug = Astro.props.initial ?? DEFAULT_SLUG;
+const current = INDUSTRIES.find((i) => i.slug === initialSlug) ?? INDUSTRIES[0];
+
+// QR codes point at the live demo address on the public site.
+const qrs = await Promise.all(
+  INDUSTRIES.map(async (i) => ({
+    slug: i.slug,
+    svg: await QRCode.toString(`${SITE.url}/demos/${i.slug}/`, {
+      type: 'svg', margin: 1, color: { dark: '#13262b', light: '#ffffff' },
+    }),
+  })),
+);
+
+const clientData = INDUSTRIES.map((i) => ({
+  slug: i.slug, tile: i.tile, pitch: i.pitch, modelledOn: i.modelledOn ?? null,
+  demoName: i.demo.name, features: i.features,
+}));
+---
+<section id="pick" class="section pick" aria-labelledby="pick-title">
+  <div class="wrap">
+    <div class="section-head">
+      <h2 id="pick-title">Pick your business, see your site</h2>
+      <p>Choose what you do and try a working demo built for businesses like yours.</p>
+    </div>
+
+    <ol class="steps">
+      <li><span class="step-n" aria-hidden="true">1</span><span>Pick your business type</span></li>
+      <li><span class="step-n" aria-hidden="true">2</span><span>Try the demo on mobile or web</span></li>
+      <li><span class="step-n" aria-hidden="true">3</span><span>Build your plan and get a quote</span></li>
+    </ol>
+
+    <div class="tiles" role="group" aria-label="Business type">
+      {INDUSTRIES.map((i) => (
+        <button type="button" class="tile" data-slug={i.slug} aria-pressed={i.slug === current.slug ? 'true' : 'false'}>
+          <span class="tile-name">{i.tile}</span>
+          <span class="tile-note">{i.tileNote}</span>
+        </button>
+      ))}
+      <a class="tile tile-other" href="/plan?for=other">
+        <span class="tile-name">Something else</span>
+        <span class="tile-note">Tell us what you do</span>
+      </a>
+    </div>
+
+    <div id="demo" class="stage">
+      <div class="viewer">
+        <div class="viewer-bar">
+          <p class="viewer-label" aria-live="polite">Showing <strong data-demo-name>{current.demo.name}</strong></p>
+          <div class="mode" role="group" aria-label="Preview size">
+            <button type="button" data-mode="mobile" aria-pressed="true">Mobile</button>
+            <button type="button" data-mode="web" aria-pressed="false">Web</button>
+          </div>
+        </div>
+
+        <div class="device" data-device="mobile">
+          <div class="screen">
+            <iframe
+              title={`Demo website: ${current.demo.name}`}
+              data-src={`/demos/${current.slug}/`}
+              loading="lazy"
+              tabindex="0"
+            ></iframe>
+            <button type="button" class="touch-shield" hidden>
+              <span>Tap to try it</span>
+            </button>
+          </div>
+          <button type="button" class="done-btn" hidden>Done, back to page</button>
+        </div>
+
+        <div class="viewer-foot">
+          <a data-open-full href={`/demos/${current.slug}/`} target="_blank" rel="noopener">Open full demo in a new tab</a>
+          <div class="qr">
+            {qrs.map((q) => (
+              <div class="qr-code" data-qr={q.slug} hidden={q.slug !== current.slug} set:html={q.svg} aria-hidden="true" />
+            ))}
+            <p>Scan to try it on your phone</p>
+          </div>
+        </div>
+      </div>
+
+      <aside class="panel" aria-labelledby="panel-title">
+        <p class="panel-pitch" data-pitch>{current.pitch}</p>
+        <h3 id="panel-title">What’s in this demo</h3>
+        <p class="panel-hint">Tap a feature to see it in the demo.</p>
+        <ul class="features" data-features>
+          {current.features.map((f) => (
+            <li>
+              <button type="button" data-target={f.target}>
+                <span class="f-label">{f.label}</span>
+                <span class="f-detail">{f.detail}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+        <p class="modelled" data-modelled hidden={!current.modelledOn}>
+          Modelled on <span data-modelled-name>{current.modelledOn}</span>. Sample content only.
+        </p>
+        <a class="btn btn-primary panel-cta" data-plan href={`/plan?for=${current.slug}`}>Build your plan</a>
+      </aside>
+    </div>
+  </div>
+  <script type="application/json" id="industry-data" set:html={JSON.stringify(clientData)} />
+</section>
+
+<style>
+  .pick { background: var(--white); border-block: 1px solid var(--line); }
+
+  .steps { list-style: none; padding: 0; margin: 0 0 28px; display: grid; gap: 10px; }
+  .steps li { display: flex; align-items: center; gap: 12px; font-weight: 700; }
+  .step-n { display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--harbour); color: var(--white); font: 700 0.95rem/1 var(--font-display); flex: none; }
+  @media (min-width: 720px) { .steps { grid-template-columns: repeat(3, auto); justify-content: start; gap: 32px; } }
+
+  .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 40px; }
+  @media (min-width: 720px) { .tiles { grid-template-columns: repeat(4, 1fr); gap: 12px; } }
+  .tile {
+    display: grid; gap: 4px; align-content: start; text-align: left; min-height: 92px;
+    padding: 14px; border-radius: var(--radius); border: 1.5px solid var(--line); background: var(--paper);
+    color: var(--ink); font: inherit; cursor: pointer; text-decoration: none;
+  }
+  .tile:hover { border-color: var(--harbour); }
+  .tile[aria-pressed='true'] { background: var(--harbour); border-color: var(--harbour); color: var(--white); }
+  .tile[aria-pressed='true'] .tile-note { color: #cfe3e2; }
+  .tile-name { font: 700 1rem/1.2 var(--font-display); }
+  .tile-note { font-size: var(--step--1); color: var(--ink-soft); line-height: 1.3; }
+  .tile-other { border-style: dashed; background: transparent; }
+
+  .stage { display: grid; gap: 32px; }
+  @media (min-width: 960px) { .stage { grid-template-columns: minmax(0, 1.35fr) minmax(300px, 1fr); gap: 48px; align-items: start; } }
+
+  .viewer-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .viewer-label { font-size: var(--step--1); color: var(--ink-soft); }
+  .viewer-label strong { color: var(--ink); }
+  .mode { display: inline-flex; background: var(--mist); border-radius: 999px; padding: 4px; }
+  .mode button { font: 700 var(--step--1)/1 var(--font-body); border: 0; background: transparent; color: var(--ink); padding: 10px 18px; border-radius: 999px; cursor: pointer; min-height: 40px; }
+  .mode button[aria-pressed='true'] { background: var(--ink); color: var(--white); }
+
+  /* The device: the one bold element on the page. */
+  .device { position: relative; margin-inline: auto; transition: width .35s ease; }
+  .device[data-device='mobile'] { width: min(360px, 100%); }
+  .device[data-device='web'] { width: 100%; }
+  .screen { position: relative; overflow: hidden; background: var(--white); }
+  .device[data-device='mobile'] .screen {
+    height: min(640px, 72vh); border: 10px solid var(--ink); border-radius: 40px;
+    box-shadow: 0 0 0 1px #2b4046, 0 30px 60px -30px rgba(19, 38, 43, .5);
+  }
+  .device[data-device='mobile'] .screen::before {
+    content: ''; position: absolute; top: 6px; left: 50%; width: 72px; height: 16px; transform: translateX(-50%);
+    background: #000; border-radius: 999px; z-index: 2; pointer-events: none;
+  }
+  .device[data-device='mobile'] .screen { background: var(--ink); padding-top: 26px; }
+  .device[data-device='web'] .screen { border: 10px solid var(--ink); border-bottom-width: 14px; border-radius: 14px 14px 4px 4px; }
+  .device[data-device='web']::after {
+    content: ''; display: block; height: 14px; margin-inline: -4%; background: linear-gradient(#3a4f55, #22363b);
+    border-radius: 0 0 14px 14px;
+  }
+  .screen iframe { border: 0; width: 100%; height: 100%; background: var(--white); }
+  .device[data-device='web'] iframe { width: 1280px; max-width: none; height: 800px; transform-origin: 0 0; }
+  @media (prefers-reduced-motion: reduce) { .device { transition: none; } }
+
+  .touch-shield {
+    position: absolute; inset: 0; z-index: 3; border: 0; cursor: pointer;
+    background: linear-gradient(to top, rgba(19, 38, 43, .55), rgba(19, 38, 43, 0) 55%);
+    display: flex; align-items: flex-end; justify-content: center; padding-bottom: 28px;
+  }
+  .touch-shield span { background: var(--wattle); color: var(--ink); font-weight: 700; padding: 12px 20px; border-radius: 999px; }
+  .done-btn { display: block; margin: 12px auto 0; font: 700 var(--step--1)/1 var(--font-body); background: var(--ink); color: var(--white); border: 0; border-radius: 999px; padding: 12px 18px; min-height: 44px; cursor: pointer; }
+
+  .viewer-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 20px; flex-wrap: wrap; }
+  .viewer-foot a { font-weight: 700; }
+  .qr { display: none; align-items: center; gap: 12px; }
+  .qr-code { width: 76px; height: 76px; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--white); }
+  .qr-code :global(svg) { width: 100%; height: 100%; }
+  .qr p { font-size: var(--step--1); color: var(--ink-soft); max-width: 120px; line-height: 1.3; }
+  @media (hover: hover) and (min-width: 960px) { .qr { display: flex; } }
+
+  .panel { display: grid; gap: 14px; }
+  @media (min-width: 960px) { .panel { position: sticky; top: 96px; } }
+  .panel-pitch { font: 700 var(--step-2)/1.15 var(--font-display); letter-spacing: -0.015em; }
+  .panel h3 { margin-top: 8px; }
+  .panel-hint { font-size: var(--step--1); color: var(--ink-soft); margin-top: -8px; }
+  .features { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  .features :global(button) {
+    width: 100%; text-align: left; display: grid; gap: 2px; padding: 12px 14px 12px 44px; position: relative;
+    background: var(--paper); border: 1.5px solid var(--line); border-radius: var(--radius); font: inherit; color: var(--ink); cursor: pointer;
+  }
+  .features :global(button)::before {
+    content: ''; position: absolute; left: 14px; top: 15px; width: 18px; height: 18px; border-radius: 50%;
+    background: var(--harbour) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'%3E%3Cpath d='M5 9.2 7.8 12 13 6.5' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/18px no-repeat;
+  }
+  .features :global(button:hover) { border-color: var(--harbour); }
+  .features :global(button[data-active]) { border-color: var(--wattle); background: var(--wattle-soft); }
+  .features :global(.f-label) { font-weight: 700; }
+  .features :global(.f-detail) { font-size: var(--step--1); color: var(--ink-soft); line-height: 1.35; }
+  .modelled { font-size: var(--step--1); color: var(--ink-soft); }
+  .panel-cta { justify-self: start; }
+</style>
+
+<script>
+  type Feature = { target: string; label: string; detail: string };
+  type Item = { slug: string; tile: string; pitch: string; modelledOn: string | null; demoName: string; features: Feature[] };
+
+  const root = document.getElementById('pick');
+  const dataEl = document.getElementById('industry-data');
+  if (root && dataEl) {
+    const items: Item[] = JSON.parse(dataEl.textContent || '[]');
+    const iframe = root.querySelector('iframe') as HTMLIFrameElement;
+    const device = root.querySelector('.device') as HTMLElement;
+    const screen = root.querySelector('.screen') as HTMLElement;
+    const shield = root.querySelector('.touch-shield') as HTMLButtonElement;
+    const doneBtn = root.querySelector('.done-btn') as HTMLButtonElement;
+    const featureList = root.querySelector('[data-features]') as HTMLUListElement;
+    const isTouch = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+    let mode: 'mobile' | 'web' = 'mobile';
+    let slug = (root.querySelector('.tile[aria-pressed="true"]') as HTMLElement)?.dataset.slug || items[0].slug;
+
+    // Load the demo only when the viewer is close to the screen.
+    const load = () => { if (!iframe.src) iframe.src = iframe.dataset.src || ''; };
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((entries) => {
+        if (entries.some((e) => e.isIntersecting)) { load(); io.disconnect(); }
+      }, { rootMargin: '400px' });
+      io.observe(device);
+    } else load();
+
+    // On phones, a shield stops the demo from swallowing page scrolling.
+    const setShield = (on: boolean) => {
+      if (!isTouch) return;
+      shield.hidden = !on;
+      doneBtn.hidden = on;
+      iframe.style.pointerEvents = on ? 'none' : 'auto';
+    };
+    setShield(true);
+    shield.addEventListener('click', () => setShield(false));
+    doneBtn.addEventListener('click', () => setShield(true));
+
+    const fit = () => {
+      if (mode === 'web') {
+        const w = screen.clientWidth;
+        const s = w / 1280;
+        iframe.style.transform = `scale(${s})`;
+        screen.style.height = `${800 * s}px`;
+      } else {
+        iframe.style.transform = '';
+        screen.style.height = '';
+      }
+    };
+    window.addEventListener('resize', fit);
+
+    root.querySelectorAll<HTMLButtonElement>('.mode button').forEach((b) => {
+      b.addEventListener('click', () => {
+        mode = b.dataset.mode as 'mobile' | 'web';
+        device.dataset.device = mode;
+        root.querySelectorAll('.mode button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+        requestAnimationFrame(() => { fit(); setTimeout(fit, 380); });
+      });
+    });
+
+    const renderFeatures = (item: Item) => {
+      featureList.innerHTML = '';
+      for (const f of item.features) {
+        const li = document.createElement('li');
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.dataset.target = f.target;
+        const l = document.createElement('span'); l.className = 'f-label'; l.textContent = f.label;
+        const d = document.createElement('span'); d.className = 'f-detail'; d.textContent = f.detail;
+        btn.append(l, d);
+        li.append(btn);
+        featureList.append(li);
+      }
+    };
+
+    const select = (next: string, fromUser: boolean) => {
+      const item = items.find((i) => i.slug === next);
+      if (!item) return;
+      slug = next;
+      root.querySelectorAll<HTMLElement>('.tile[data-slug]').forEach((t) => t.setAttribute('aria-pressed', String(t.dataset.slug === slug)));
+      const src = `/demos/${slug}/`;
+      iframe.dataset.src = src;
+      if (fromUser || iframe.src) iframe.src = src;
+      iframe.title = `Demo website: ${item.demoName}`;
+      root.querySelector('[data-demo-name]')!.textContent = item.demoName;
+      root.querySelector('[data-pitch]')!.textContent = item.pitch;
+      const modelled = root.querySelector('[data-modelled]') as HTMLElement;
+      modelled.hidden = !item.modelledOn;
+      root.querySelector('[data-modelled-name]')!.textContent = item.modelledOn || '';
+      (root.querySelector('[data-plan]') as HTMLAnchorElement).href = `/plan?for=${slug}`;
+      (root.querySelector('[data-open-full]') as HTMLAnchorElement).href = src;
+      root.querySelectorAll<HTMLElement>('[data-qr]').forEach((q) => { q.hidden = q.dataset.qr !== slug; });
+      renderFeatures(item);
+      setShield(true);
+      if (fromUser) {
+        history.replaceState(null, '', `/for/${slug}/`);
+        try { localStorage.setItem('nn-business', slug); } catch { /* storage unavailable */ }
+      }
+    };
+
+    root.querySelectorAll<HTMLButtonElement>('.tile[data-slug]').forEach((t) => {
+      t.addEventListener('click', () => select(t.dataset.slug!, true));
+    });
+
+    // Tap a feature: scroll the demo to it and flash it.
+    featureList.addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest('button[data-target]') as HTMLButtonElement | null;
+      if (!btn) return;
+      load();
+      featureList.querySelectorAll('[data-active]').forEach((x) => x.removeAttribute('data-active'));
+      btn.setAttribute('data-active', '');
+      if (window.innerWidth < 960) device.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const go = () => {
+        const doc = iframe.contentDocument;
+        const el = doc?.getElementById(btn.dataset.target!);
+        if (!doc || !el) return;
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        el.classList.remove('nn-flash');
+        void (el as HTMLElement).offsetWidth;
+        el.classList.add('nn-flash');
+      };
+      if (iframe.contentDocument?.readyState === 'complete' && iframe.contentDocument.getElementById(btn.dataset.target!)) go();
+      else iframe.addEventListener('load', go, { once: true });
+    });
+
+    // Returning visitors land on the business they picked last time (home page only).
+    if (location.pathname === '/') {
+      try {
+        const saved = localStorage.getItem('nn-business');
+        if (saved && saved !== slug && items.some((i) => i.slug === saved)) select(saved, false);
+      } catch { /* storage unavailable */ }
+    }
+  }
+</script>
